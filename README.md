@@ -1,7 +1,7 @@
 # Epub parser
 
 This parser only supports epub version 3.0 so far.
-This parser also only reads the MetaData.
+This parser also only reads MetaData and Manifest.
 
 ### How to use?
 ```go
@@ -18,4 +18,4 @@ if err != nil {
     t.Fail()
 }
 ```
-After that, all metadata can be found in the book Object
+After that, all metadata and manifest data can be found in the book Object

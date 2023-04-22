@@ -5,6 +5,7 @@ import "encoding/xml"
 type Package struct {
 	XMLName          xml.Name  `xml:"package"`
 	Metadata         *Metadata `xml:"metadata"`
+	Manifest         *Manifest `xml:"manifest"`
 	Version          string    `xml:"version,attr"`
 	UniqueIdentifier string    `xml:"unique-identifier,attr"`
 	ID               string    `xml:"id,attr,omitempty"`
@@ -23,6 +24,20 @@ type DefaultAttributes struct {
 	Dir  string `xml:"dir,attr,omitempty"`
 	Lang string `xml:"lang,attr,omitempty"`
 	Text string `xml:",chardata"`
+}
+
+type Manifest struct {
+	Id   string  `xml:"id,attr,omitempty"`
+	Item *[]Item `xml:"item"`
+}
+
+type Item struct {
+	Id           string `xml:"id,attr"`
+	Href         string `xml:"href,attr"`
+	MediaType    string `xml:"media-type,attr"`
+	Fallback     string `xml:"fallback,attr,omitempty"`
+	MediaOverlay string `xml:"media-overlay,attr,omitempty"`
+	Properties   string `xml:"properties,attr,omitempty"`
 }
 
 type Metadata struct {
@@ -61,5 +76,5 @@ type Meta struct {
 	Scheme   string `xml:"scheme,attr,omitempty"`
 	Name     string `xml:"name,attr,omitempty"`    //deprecated
 	Content  string `xml:"content,attr,omitempty"` //deprecated
-	Text     string `xml:",chardata"`              //omitempty because the deprecated meta has no text
+	Text     string `xml:",chardata"`
 }
