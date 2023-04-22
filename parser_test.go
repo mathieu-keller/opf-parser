@@ -1,26 +1,26 @@
 package epub
 
 import (
-	"io/ioutil"
-	"os"
+	"archive/zip"
 	"strconv"
 	"testing"
 )
 
 func Test_parse_epub_3_0_opf(t *testing.T) {
-	b, err := os.Open("./test_opf.xml")
+	zipReader, err := zip.OpenReader("./test_epub_v3_0.epub")
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
 	}
-	defer b.Close()
-	reader := ioutil.NopCloser(b)
-	defer reader.Close()
-	opf, err := ReadOpf(reader)
+	defer zipReader.Close()
+
+	book, err := OpenBook(zipReader)
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
 	}
+	opf := book.Opf
+
 	assertEquals(t, opf.Lang, "us")
 	assertEquals(t, opf.UniqueIdentifier, "p1234")
 	assertEquals(t, opf.Version, "3.0")
