@@ -2,17 +2,23 @@ package epub
 
 import (
 	"archive/zip"
+	"bytes"
+	"os"
 	"strconv"
 	"testing"
 )
 
 func Test_parse_epub_3_0_opf(t *testing.T) {
-	zipReader, err := zip.OpenReader("./test_epub_v3_0.epub")
+	binaryFile, err := os.ReadFile("./test_epub_v3_0.epub")
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
 	}
-	defer zipReader.Close()
+	zipReader, err := zip.NewReader(bytes.NewReader(binaryFile), int64(len(binaryFile)))
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
 
 	book, err := OpenBook(zipReader)
 	if err != nil {

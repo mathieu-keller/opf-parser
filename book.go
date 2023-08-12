@@ -11,10 +11,10 @@ import (
 type Book struct {
 	Opf       Package
 	Container Container
-	ZipReader *zip.ReadCloser
+	ZipReader *zip.Reader
 }
 
-func OpenBook(reader *zip.ReadCloser) (*Book, error) {
+func OpenBook(reader *zip.Reader) (*Book, error) {
 	book := &Book{ZipReader: reader}
 	err := book.readXML("META-INF/container.xml", &book.Container)
 	if err != nil {

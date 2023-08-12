@@ -5,17 +5,20 @@ This parser also only reads MetaData and Manifest.
 
 ### How to use?
 ```go
-zipReader, err := zip.OpenReader("./test_epub_v3_0.epub")
+binaryFile, err := os.ReadFile("./test_epub_v3_0.epub")
 if err != nil {
-    t.Log(err.Error())
-    t.Fail()
+    println(err.Error())
+	return;
 }
-defer zipReader.Close()
-
+zipReader, err := zip.NewReader(bytes.NewReader(binaryFile), int64(len(binaryFile)))
+if err != nil {
+    println(err.Error())
+	return;
+}
 book, err := OpenBook(zipReader)
 if err != nil {
-    t.Log(err.Error())
-    t.Fail()
+    println(err.Error())
+	return;
 }
 ```
 After that, all metadata and manifest data can be found in the book Object
