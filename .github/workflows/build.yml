@@ -29,7 +29,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Semantic Release Action
-      uses: codfish/semantic-release-action@v2
+      uses: codfish/semantic-release-action@v3
       with:
         branches: main
         dry_run: false
