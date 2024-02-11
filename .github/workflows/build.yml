@@ -4,6 +4,12 @@ on:
   push:
 
 jobs:
+  dry-release:
+    name: dry release
+    uses: mathieu-keller/github-action-workflows/.github/workflows/semantic-release.yaml@2.0.1
+    with:
+      release-branch: main
+      dry: true
   test:
     name: test
     runs-on: ubuntu-latest
@@ -21,21 +27,10 @@ jobs:
     - name: Test
       run: go test -v ./...
   release:
-    needs: [test]
-    if: github.ref == 'refs/heads/main'
     name: create release
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-    - name: Semantic Release Action
-      uses: codfish/semantic-release-action@v2
-      with:
-        branches: main
-        dry_run: false
-        additional_packages: |
-          ['@semantic-release/git']
-        plugins: |
-          ['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github', '@semantic-release/git']
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    needs: [test]
+    if: ${{ github.ref == 'refs/heads/main' }}
+    uses: mathieu-keller/github-action-workflows/.github/workflows/semantic-release.yaml@2.0.1
+    with:
+      release-branch: main
+      dry: false
