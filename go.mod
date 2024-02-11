@@ -1,3 +1,3 @@
 module github.com/mathieu-keller/epub-parser
 
-go 1.21
+go 1.22

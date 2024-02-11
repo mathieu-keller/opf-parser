@@ -22,5 +22,6 @@
   "commitBodyTable": true,
   "pre-commit": {
     "enabled": true
-  }
+  },
+  "postUpdateOptions": ["gomodTidy"]
 }
