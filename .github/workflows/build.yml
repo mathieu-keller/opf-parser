@@ -1,7 +1,11 @@
 name: Build
 
 on:
+  pull_request:
   push:
+    branches:
+      - 'develop'
+      - 'main'
 
 jobs:
   dry-release:
