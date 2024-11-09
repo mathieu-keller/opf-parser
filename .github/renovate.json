@@ -17,11 +17,47 @@
   "automergeType": "pr",
   "automergeStrategy": "rebase",
   "platformAutomerge": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^\\.github/workflows/.*\\.ya?ml$"  
+      ],
+      "matchStrings": [
+        "go-version:\\s(?<currentValue>.*?)\\s" 
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version"
+    }
+  ],
   "commitMessageAction": "bump",
   "commitMessageExtra": "from {{{currentValue}}} to {{#if isMajor}}{{{newMajor}}}{{else}}{{#if isSingleVersion}}{{{newVersion}}}{{else}}{{{newValue}}}{{/if}}{{/if}}",
   "commitBodyTable": true,
   "pre-commit": {
     "enabled": true
   },
-  "postUpdateOptions": ["gomodTidy"]
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "semanticCommitType": "fix",
+      "commitMessageExtra": "from {{{currentValue}}} to {{#if isMajor}}{{{newMajor}}}{{else}}{{#if isSingleVersion}}{{{newVersion}}}{{else}}{{{newValue}}}{{/if}}{{/if}}"
+    },
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "semanticCommitType": "fix"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "enabled": true,
+      "semanticCommitType": "fix"
+    }
+  ]
 }

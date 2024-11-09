@@ -16,16 +16,16 @@ jobs:
       dry: true
   test:
     name: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.22
+        go-version: 1.23.3
     - name: Checkout
       uses: actions/checkout@v4
     - name: install dep
-      run: go get -d ./...
+      run: go get -v ./...
     - name: Build
       run: go build -v ./...
     - name: Test
