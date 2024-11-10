@@ -6,10 +6,11 @@ import (
 	"os"
 	"testing"
 	"strconv"
+	"github.com/mathieu-keller/epub-parser/model"
 )
 
-func Test_parse_epub_3_0_opf(t *testing.T) {
-	binaryFile, err := os.ReadFile("./test_epub_v3_0.epub")
+func Test_parse_epub_2_0_opf(t *testing.T) {
+	binaryFile, err := os.ReadFile("./test_epub_v2.0.epub")
 	if err != nil {
 		t.Log(err.Error())
 		t.Fail()
@@ -25,10 +26,19 @@ func Test_parse_epub_3_0_opf(t *testing.T) {
 		t.Log(err.Error())
 		t.Fail()
 	}
-	metadata := book.Metadata
+	assertMetadata(t, book.Metadata)
+}
 
-	assertSize("mainId", t, len(*metadata.Creators), 1)
-	assertEquals("mainId", t, (*metadata.Creators)[0].Role, "author")
+func assertMetadata(t *testing.T, metaData model.Metadata) {
+	assertEquals("mainId.Id", t, metaData.MainId.Id, "04f24751-f869-48a4-9100-7a2858f94b47")
+	assertEquals("mainId.Scheme", t, metaData.MainId.Scheme, "uuid")
+
+	titles :=  *metaData.Titles;
+	assertSize("title size", t, len(titles), 1)
+	assertEquals("title.Title", t, titles[0].Title, "Test epub")
+	assertEquals("title.Language", t, titles[0].Language, "en")
+	assertEquals("title.Type", t, titles[0].Type, "main")
+	assertEquals("title.FileAs", t, titles[0].FileAs, "Test epub")
 }
 
 func assertSize(fieldName string, t *testing.T, actuallySize int, expectedSize int) {
