@@ -1,4 +1,4 @@
-package v3
+package epub_v3
 
 import (
 	"encoding/xml"
@@ -19,15 +19,9 @@ func getMetadata(metaData map[string]map[string]Meta, id string, metaDataKey str
 	return ""
 }
 
-
-func ParseOpf(book *model.Book) (error) {
-	opf := Package{}
-	err := book.ReadXML(book.Container.Rootfile.Path, &opf)
-	if err != nil {
-		return err
-	}
+func getMetaMap(metaData []Meta) *map[string]map[string]Meta {
 	metaMap := make(map[string]map[string]Meta)
-	for _, meta := range *opf.Metadata.Meta {
+	for _, meta := range metaData {
 		if meta.Refines != "" && meta.Property != "" {
 			id := strings.Replace(meta.Refines, "#", "", 1)
 			innerMap, ok := metaMap[id]
@@ -38,6 +32,91 @@ func ParseOpf(book *model.Book) (error) {
 			innerMap[meta.Property] = meta
 		}
 	}
+	return &metaMap;
+}
+
+func getTitles(metaData []DefaultAttributes, metaMap map[string]map[string]Meta) *[]model.Title {
+	titles := make([]model.Title, len(metaData))
+	for i, title := range metaData {
+		fileAs := getMetadata(metaMap, title.Id, "file-as")
+		titleType := getMetadata(metaMap, title.Id, "title-type")
+		titles[i] = model.Title{
+			Title: title.Text,
+			Language: title.Lang,
+			Type: titleType,
+			FileAs: fileAs,
+		}
+	}
+	return &titles;
+}
+
+func getLanguages(metaData []ID) *[]string {
+	languages := make([]string, len(metaData))
+	for i, language := range metaData {
+		languages[i] = language.Text
+	}
+	return &languages;
+}
+
+func getCreators(metaData []DefaultAttributes, metaMap map[string]map[string]Meta) *[]model.Creator {
+	if metaData != nil {
+		creators := make([]model.Creator, len(metaData))
+		for i, creator := range metaData {
+			fileAs := getMetadata(metaMap, creator.Id, "file-as")
+			rawRole := getMetadata(metaMap, creator.Id, "role")
+			role, ok := model.Relator[rawRole]
+			if !ok && rawRole != "" {
+				role = "unknown"
+			}
+			creators[i] = model.Creator{
+				Name:     creator.Text,
+				FileAs:   fileAs,
+				RawRole:  rawRole,
+				Language: creator.Lang,
+				Role: role,
+			}
+		}
+		return &creators;
+	}
+	return nil;
+}
+
+func getDefaultAttributes(metaData []DefaultAttributes) *[]model.DefaultAttributes {
+	if metaData != nil {
+		defaultAttributes := make([]model.DefaultAttributes, len(metaData))
+		for i, defaultAttribute := range metaData {
+			defaultAttributes[i] = model.DefaultAttributes{
+				Text:     defaultAttribute.Text,
+				Language:   defaultAttribute.Lang,
+			}
+		}
+		return &defaultAttributes
+	}
+	return nil;
+}
+
+func getDates(metaData []ID) *[]model.Date {
+	if metaData != nil {
+		dates := make([]model.Date, len(metaData))
+		for i, date := range metaData {
+			dates[i] = model.Date{
+				Date:     date.Text,
+				Type:   "publication",
+			}
+		}
+		return &dates;
+	}
+	return nil;
+}
+
+
+func ParseOpf(book *model.Book) (error) {
+	opf := Package{}
+	err := book.ReadXML(book.Container.Rootfile.Path, &opf)
+	if err != nil {
+		return err
+	}
+	metaMap:= getMetaMap(*opf.Metadata.Meta)
 
 	identifiers := make([]model.Identifier, len(*opf.Metadata.Identifier))
 	for i, identifier := range *opf.Metadata.Identifier {
@@ -54,108 +133,15 @@ func ParseOpf(book *model.Book) (error) {
 	}
 	book.Metadata.Identifiers = &identifiers
 
-	titles := make([]model.Title, len(*opf.Metadata.Title))
-	for i, title := range *opf.Metadata.Title {
-		fileAs := getMetadata(metaMap, title.Id, "file-as")
-		titleType := getMetadata(metaMap, title.Id, "title-type")
-		titles[i] = model.Title{
-			Title: title.Text,
-			Language: title.Lang,
-			Type: titleType,
-			FileAs: fileAs,
-		}
-	}
-	book.Metadata.Titles = &titles
 
-	languages := make([]string, len(*opf.Metadata.Language))
-	for i, language := range *opf.Metadata.Language {
-		languages[i] = language.Text
-	}
-	book.Metadata.Languages = &languages
-
-	if opf.Metadata.Creator != nil {
-		creators := make([]model.Creator, len(*opf.Metadata.Creator))
-		for i, creator := range *opf.Metadata.Creator {
-			fileAs := getMetadata(metaMap, creator.Id, "file-as")
-			rawRole := getMetadata(metaMap, creator.Id, "role")
-			role, ok := model.Relator[rawRole]
-			if !ok {
-				role = "unknown"
-			}
-			creators[i] = model.Creator{
-				Name:     creator.Text,
-				FileAs:   fileAs,
-				RawRole:  rawRole,
-				Language: creator.Lang,
-				Role: role,
-			}
-		}
-		book.Metadata.Creators = &creators
-	}
-	if opf.Metadata.Contributor != nil {
-		contributors := make([]model.Creator, len(*opf.Metadata.Contributor))
-		for i, contributor := range *opf.Metadata.Contributor {
-			fileAs := getMetadata(metaMap, contributor.Id, "file-as")
-			rawRole := getMetadata(metaMap, contributor.Id, "role")
-			role, ok := model.Relator[rawRole]
-			if !ok {
-				role = "unknown"
-			}
-			contributors[i] = model.Creator{
-				Name:     contributor.Text,
-				FileAs:   fileAs,
-				RawRole:  rawRole,
-				Role: role,
-				Language: contributor.Lang,
-			}
-		}
-		book.Metadata.Contributors = &contributors
-	}
-
-	if opf.Metadata.Publisher != nil {
-		publishers := make([]model.DefaultAttributes, len(*opf.Metadata.Publisher))
-		for i, publisher := range *opf.Metadata.Publisher {
-			publishers[i] = model.DefaultAttributes{
-				Text:     publisher.Text,
-				Language:   publisher.Lang,
-			}
-		}
-		book.Metadata.Publishers = &publishers
-	}
-
-	if opf.Metadata.Subject != nil {
-		subjects := make([]model.DefaultAttributes, len(*opf.Metadata.Subject))
-		for i, subject := range *opf.Metadata.Subject {
-			subjects[i] = model.DefaultAttributes{
-				Text:     subject.Text,
-				Language:   subject.Lang,
-			}
-		}
-		book.Metadata.Subjects = &subjects
-	}
-
-	if opf.Metadata.Description != nil {
-		descriptions := make([]model.DefaultAttributes, len(*opf.Metadata.Description))
-		for i, description := range *opf.Metadata.Description {
-			descriptions[i] = model.DefaultAttributes{
-				Text:     description.Text,
-				Language:   description.Lang,
-			}
-		}
-		book.Metadata.Descriptions = &descriptions
-	}
-
-	if opf.Metadata.Date != nil {
-		dates := make([]model.Date, len(*opf.Metadata.Date))
-		for i, date := range *opf.Metadata.Date {
-			dates[i] = model.Date{
-				Date:     date.Text,
-				Type:   "publication",
-			}
-		}
-		book.Metadata.Dates = &dates
-	}
-
+	book.Metadata.Titles = getTitles(*opf.Metadata.Title, *metaMap)
+	book.Metadata.Languages = getLanguages(*opf.Metadata.Language)
+	book.Metadata.Creators = getCreators(*opf.Metadata.Creator, *metaMap)
+	book.Metadata.Contributors = getCreators(*opf.Metadata.Contributor, *metaMap)
+	book.Metadata.Publishers = getDefaultAttributes(*opf.Metadata.Publisher)
+	book.Metadata.Subjects = getDefaultAttributes(*opf.Metadata.Subject)
+	book.Metadata.Descriptions = getDefaultAttributes(*opf.Metadata.Description)
+	book.Metadata.Dates = getDates(*opf.Metadata.Date)
 	return err
 }
 

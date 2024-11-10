@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/mathieu-keller/epub-parser/model"
-	v2 "github.com/mathieu-keller/epub-parser/v2"
-	v3 "github.com/mathieu-keller/epub-parser/v3"
+	"github.com/mathieu-keller/epub-parser/epub_v2"
+	"github.com/mathieu-keller/epub-parser/epub_v3"
 )
 
 func OpenBook(reader *zip.Reader) (*model.Book, error) {
@@ -27,9 +27,9 @@ func OpenBook(reader *zip.Reader) (*model.Book, error) {
 	}
 	switch {
 	case ebookVersion >= 3.0 && ebookVersion < 4.0:
-		v3.ParseOpf(book)
+		epub_v3.ParseOpf(book)
 	case ebookVersion >= 2.0 && ebookVersion < 3.0:
-		v2.ParseOpf(book)
+		epub_v2.ParseOpf(book)
 	default:
 		return nil, fmt.Errorf("%f not supported yet!", ebookVersion)
 	}
