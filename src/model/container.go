@@ -1,4 +1,4 @@
-package epub
+package model
 
 type Container struct {
 	Rootfile Rootfile `xml:"rootfiles>rootfile"`
