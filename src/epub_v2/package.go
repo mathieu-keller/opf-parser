@@ -2,32 +2,31 @@ package epub_v2
 
 import (
 	"encoding/xml"
-
 	"github.com/mathieu-keller/epub-parser/model"
 )
 
-func getTitles(metaData []DefaultAttributes) (*[]model.Title) {
+func getTitles(metaData []DefaultAttributes) *[]model.Title {
 	titles := make([]model.Title, len(metaData))
 	for i, title := range metaData {
 		titles[i] = model.Title{
-			Title: title.Text,
+			Title:    title.Text,
 			Language: title.Lang,
-			Type: "main",
-			FileAs: title.Text,
+			Type:     "main",
+			FileAs:   title.Text,
 		}
 	}
-	return &titles;
+	return &titles
 }
 
-func getLanguages(metaData []ID) (*[]string) {
+func getLanguages(metaData []ID) *[]string {
 	languages := make([]string, len(metaData))
 	for i, language := range metaData {
 		languages[i] = language.Text
 	}
-	return &languages;
+	return &languages
 }
 
-func getCreators(metaData []Creator) *[]model.Creator{
+func getCreators(metaData []Creator) *[]model.Creator {
 	if metaData != nil {
 		creators := make([]model.Creator, len(metaData))
 		for i, creator := range metaData {
@@ -40,43 +39,40 @@ func getCreators(metaData []Creator) *[]model.Creator{
 				FileAs:   creator.FileAs,
 				RawRole:  creator.Role,
 				Language: creator.Lang,
-				Role: role,
+				Role:     role,
 			}
 		}
-		return &creators;
+		return &creators
 	}
 	return nil
 }
 
-func getDefaultAttributes(metaData []DefaultAttributes) (*[]model.DefaultAttributes) {
+func getDefaultAttributes(metaData []DefaultAttributes) *[]model.DefaultAttributes {
 	if metaData != nil {
 		defaultAttributes := make([]model.DefaultAttributes, len(metaData))
 		for i, defaultAttribute := range metaData {
 			defaultAttributes[i] = model.DefaultAttributes{
 				Text:     defaultAttribute.Text,
-				Language:   defaultAttribute.Lang,
+				Language: defaultAttribute.Lang,
 			}
 		}
-		return  &defaultAttributes;
+		return &defaultAttributes
 	}
-	return nil;
+	return nil
 }
 
-func getDate(metaData []Date) *[]model.Date {
+func getDate(metaData []Date) *[]string {
 	if metaData != nil {
-		dates := make([]model.Date, len(metaData))
+		dates := make([]string, len(metaData))
 		for i, date := range metaData {
-			dates[i] = model.Date{
-				Date:     date.Text,
-				Type:   date.Event,
-			}
+			dates[i] = date.Text
 		}
 		return &dates
 	}
-	return nil;
+	return nil
 }
 
-func ParseOpf(book *model.Book) (error) {
+func ParseOpf(book *model.Book) error {
 	opf := Package{}
 	err := book.ReadXML(book.Container.Rootfile.Path, &opf)
 	if err != nil {
@@ -86,12 +82,12 @@ func ParseOpf(book *model.Book) (error) {
 	identifiers := make([]model.Identifier, len(*opf.Metadata.Identifier))
 	for i, identifier := range *opf.Metadata.Identifier {
 		identifiers[i] = model.Identifier{
-			Id: identifier.Text,
+			Id:     identifier.Text,
 			Scheme: identifier.Scheme,
 		}
 		if identifier.Id == opf.UniqueIdentifier {
 			book.Metadata.MainId = model.Identifier{
-				Id: identifier.Text,
+				Id:     identifier.Text,
 				Scheme: identifier.Scheme,
 			}
 		}
@@ -106,7 +102,6 @@ func ParseOpf(book *model.Book) (error) {
 	book.Metadata.Subjects = getDefaultAttributes(*opf.Metadata.Subject)
 	book.Metadata.Descriptions = getDefaultAttributes(*opf.Metadata.Description)
 	book.Metadata.Dates = getDate(*opf.Metadata.Date)
-	
 
 	return err
 }

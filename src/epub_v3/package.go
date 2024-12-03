@@ -2,8 +2,8 @@ package epub_v3
 
 import (
 	"encoding/xml"
-	"strings"
 	"github.com/mathieu-keller/epub-parser/model"
+	"strings"
 )
 
 func getMetadata(metaData map[string]map[string]Meta, id string, metaDataKey string) string {
@@ -13,6 +13,19 @@ func getMetadata(metaData map[string]map[string]Meta, id string, metaDataKey str
 			keyData, keyOk := idData[metaDataKey]
 			if keyOk {
 				return keyData.Text
+			}
+		}
+	}
+	return ""
+}
+
+func getMetadataSchema(metaData map[string]map[string]Meta, id string, metaDataKey string) string {
+	if id != "" {
+		idData, idOk := metaData[id]
+		if idOk {
+			keyData, keyOk := idData[metaDataKey]
+			if keyOk {
+				return keyData.Scheme
 			}
 		}
 	}
@@ -32,7 +45,7 @@ func getMetaMap(metaData []Meta) *map[string]map[string]Meta {
 			innerMap[meta.Property] = meta
 		}
 	}
-	return &metaMap;
+	return &metaMap
 }
 
 func getTitles(metaData []DefaultAttributes, metaMap map[string]map[string]Meta) *[]model.Title {
@@ -41,13 +54,13 @@ func getTitles(metaData []DefaultAttributes, metaMap map[string]map[string]Meta)
 		fileAs := getMetadata(metaMap, title.Id, "file-as")
 		titleType := getMetadata(metaMap, title.Id, "title-type")
 		titles[i] = model.Title{
-			Title: title.Text,
+			Title:    title.Text,
 			Language: title.Lang,
-			Type: titleType,
-			FileAs: fileAs,
+			Type:     titleType,
+			FileAs:   fileAs,
 		}
 	}
-	return &titles;
+	return &titles
 }
 
 func getLanguages(metaData []ID) *[]string {
@@ -55,7 +68,7 @@ func getLanguages(metaData []ID) *[]string {
 	for i, language := range metaData {
 		languages[i] = language.Text
 	}
-	return &languages;
+	return &languages
 }
 
 func getCreators(metaData []DefaultAttributes, metaMap map[string]map[string]Meta) *[]model.Creator {
@@ -64,21 +77,27 @@ func getCreators(metaData []DefaultAttributes, metaMap map[string]map[string]Met
 		for i, creator := range metaData {
 			fileAs := getMetadata(metaMap, creator.Id, "file-as")
 			rawRole := getMetadata(metaMap, creator.Id, "role")
-			role, ok := model.Relator[rawRole]
-			if !ok && rawRole != "" {
-				role = "unknown"
-			}
+			role := getRole(metaMap, creator, rawRole)
 			creators[i] = model.Creator{
 				Name:     creator.Text,
 				FileAs:   fileAs,
 				RawRole:  rawRole,
 				Language: creator.Lang,
-				Role: role,
+				Role:     role,
 			}
 		}
-		return &creators;
+		return &creators
 	}
-	return nil;
+	return nil
+}
+
+func getRole(metaMap map[string]map[string]Meta, creator DefaultAttributes, rawRole string) string {
+	scheme := getMetadataSchema(metaMap, creator.Id, "role")
+	role := "unknown"
+	if scheme == "marc:relators" {
+		role, _ = model.Relator[rawRole]
+	}
+	return role
 }
 
 func getDefaultAttributes(metaData []DefaultAttributes) *[]model.DefaultAttributes {
@@ -87,52 +106,50 @@ func getDefaultAttributes(metaData []DefaultAttributes) *[]model.DefaultAttribut
 		for i, defaultAttribute := range metaData {
 			defaultAttributes[i] = model.DefaultAttributes{
 				Text:     defaultAttribute.Text,
-				Language:   defaultAttribute.Lang,
+				Language: defaultAttribute.Lang,
 			}
 		}
 		return &defaultAttributes
 	}
-	return nil;
+	return nil
 }
 
-func getDates(metaData []ID) *[]model.Date {
+func getDates(metaData []ID) *[]string {
 	if metaData != nil {
-		dates := make([]model.Date, len(metaData))
+		dates := make([]string, len(metaData))
 		for i, date := range metaData {
-			dates[i] = model.Date{
-				Date:     date.Text,
-				Type:   "publication",
-			}
+			dates[i] = date.Text
 		}
-		return &dates;
+		return &dates
 	}
-	return nil;
+	return nil
 }
 
-
-func ParseOpf(book *model.Book) (error) {
+func ParseOpf(book *model.Book) error {
 	opf := Package{}
 	err := book.ReadXML(book.Container.Rootfile.Path, &opf)
 	if err != nil {
 		return err
 	}
-	metaMap:= getMetaMap(*opf.Metadata.Meta)
+	metaMap := getMetaMap(*opf.Metadata.Meta)
 
 	identifiers := make([]model.Identifier, len(*opf.Metadata.Identifier))
 	for i, identifier := range *opf.Metadata.Identifier {
+		parts := strings.Split(identifier.Text, ":")
+		scheme := parts[0]
+		id := parts[1]
 		identifiers[i] = model.Identifier{
-			Id: identifier.Text,
-			Scheme: "",
+			Id:     id,
+			Scheme: scheme,
 		}
 		if identifier.Id == opf.UniqueIdentifier {
 			book.Metadata.MainId = model.Identifier{
-				Id: identifier.Text,
-				Scheme: "",
+				Id:     id,
+				Scheme: scheme,
 			}
 		}
 	}
 	book.Metadata.Identifiers = &identifiers
-
 
 	book.Metadata.Titles = getTitles(*opf.Metadata.Title, *metaMap)
 	book.Metadata.Languages = getLanguages(*opf.Metadata.Language)
@@ -144,7 +161,6 @@ func ParseOpf(book *model.Book) (error) {
 	book.Metadata.Dates = getDates(*opf.Metadata.Date)
 	return err
 }
-
 
 type Package struct {
 	XMLName          xml.Name  `xml:"package"`

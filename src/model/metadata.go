@@ -10,12 +10,7 @@ type Metadata struct {
 	Publishers   *[]DefaultAttributes
 	Subjects     *[]DefaultAttributes
 	Descriptions *[]DefaultAttributes
-	Dates        *[]Date
-
-	Source   *[]DefaultAttributes
-	Relation *[]DefaultAttributes
-	Coverage *[]DefaultAttributes
-	Rights   *[]DefaultAttributes
+	Dates        *[]string
 }
 
 type Creator struct {
@@ -33,17 +28,12 @@ type Title struct {
 	FileAs   string
 }
 
-type Date struct {
-	Date string
-	Type string
-}
-
 type DefaultAttributes struct {
 	Text     string
 	Language string
 }
 
 type Identifier struct {
-	Id   string
+	Id     string
 	Scheme string
 }
